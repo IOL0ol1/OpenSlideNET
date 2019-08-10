@@ -52,6 +52,7 @@ namespace OpenSlideNET.Tests
             yield return new object[] { Path.Combine(currentDir, "Assets", "boxes.png"), null };
             yield return new object[] { Path.Combine(currentDir, "Assets", "boxes.tiff"), "generic-tiff" };
         }
+
         [Theory]
         [MemberData(nameof(GetDetectFormatData))]
         public void TestDetectFormat(string fileName, string format)

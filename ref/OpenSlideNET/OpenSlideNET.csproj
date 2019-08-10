@@ -1,14 +1,9 @@
-﻿<Project Sdk="MSBuild.Sdk.Extras">
+<Project Sdk="MSBuild.Sdk.Extras">
 
   <PropertyGroup>
-    <PackageId>OpenSlideNET</PackageId>
-    <Title>OpenSlideNET</Title>
-    <Description>.NET bindings for OpenSlide.</Description>
     <TargetFrameworks>net46;netstandard2.0;netstandard2.1</TargetFrameworks>
-    <RuntimeIdentifiers>win;linux;osx</RuntimeIdentifiers>
-    <ExtrasBuildEachRuntimeIdentifier Condition="'$(TargetFramework)' != 'net46'">true</ExtrasBuildEachRuntimeIdentifier>
   </PropertyGroup>
-  
+
   <ItemGroup Condition="'$(TargetFramework)' == 'net46'">
     <PackageReference Include="System.ValueTuple" Version="4.5.0" />
   </ItemGroup>
@@ -18,6 +13,7 @@
   </ItemGroup>
 
   <ItemGroup>
-   <ReferenceAssemblyProjectReference Include="..\..\ref\OpenSlideNET\OpenSlideNET.csproj" />
+    <Compile Include="..\..\src\OpenSlideNET\**\*.cs" Exclude="..\..\src\OpenSlideNET\obj\**" />
   </ItemGroup>
+
 </Project>

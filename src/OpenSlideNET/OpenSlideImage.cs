@@ -10,20 +10,20 @@ namespace OpenSlideNET
 {
     public class OpenSlideImage : IDisposable
     {
-        public static string LibraryVersion => Interop.GetVersion();
+        public static string LibraryVersion => OpenSlideInterop.GetVersion();
 
-        private IntPtr _handle;
+        private OpenSlideImageSafeHandle _handle;
         private FileInfo _fileInfo;
 
-        internal OpenSlideImage(IntPtr handle, FileInfo fileInfo)
+        internal OpenSlideImage(OpenSlideImageSafeHandle handle, FileInfo fileInfo)
         {
-            Debug.Assert(handle != IntPtr.Zero);
+            Debug.Assert(!handle.IsInvalid);
             _handle = handle;
             _fileInfo = fileInfo;
         }
 
         [EditorBrowsable(EditorBrowsableState.Never)]
-        public IntPtr Handle => _handle;
+        public IntPtr Handle => _handle.DangerousGetHandle();
 
         public DateTime LastWriteTimeUtc => _fileInfo.LastWriteTimeUtc;
 
@@ -31,14 +31,14 @@ namespace OpenSlideNET
         {
             FileInfo fileInfo = new FileInfo(filename);
             // Open file using OpenSlide
-            IntPtr handle = Interop.Open(filename);
-            if (handle == IntPtr.Zero)
+            var handle = OpenSlideInterop.Open(filename);
+            if (handle.IsInvalid)
             {
                 throw new OpenSlideUnsupportedFormatException();
             }
             if (!ThrowHelper.TryCheckError(handle, out string errMsg))
             {
-                Interop.Close(handle);
+                handle.Dispose();
                 throw new OpenSlideException(errMsg);
             }
             return new OpenSlideImage(handle, fileInfo);
@@ -52,7 +52,7 @@ namespace OpenSlideNET
         /// <returns>the format vendor of the specified file.</returns>
         public static string DetectFormat(string filename)
         {
-            return Interop.DetectVendor(filename);
+            return OpenSlideInterop.DetectVendor(filename);
         }
 
         /// <summary>
@@ -64,7 +64,7 @@ namespace OpenSlideNET
             {
                 EnsureNotDisposed();
 
-                int result = Interop.GetLevelCount(_handle);
+                int result = OpenSlideInterop.GetLevelCount(_handle);
                 if (result == -1)
                 {
                     ThrowHelper.CheckAndThrowError(_handle);
@@ -78,7 +78,7 @@ namespace OpenSlideNET
         {
             if (_dimemsionsCache == null)
             {
-                Interop.GetLevel0Dimensions(_handle, out long w, out long h);
+                OpenSlideInterop.GetLevel0Dimensions(_handle, out long w, out long h);
                 if (w == -1 || h == -1)
                 {
                     ThrowHelper.CheckAndThrowError(_handle);
@@ -129,7 +129,7 @@ namespace OpenSlideNET
         {
             EnsureNotDisposed();
 
-            Interop.GetLevelDimensions(_handle, level, out long w, out long h);
+            OpenSlideInterop.GetLevelDimensions(_handle, level, out long w, out long h);
             if (w == -1 || h == -1)
             {
                 ThrowHelper.CheckAndThrowError(_handle);
@@ -146,7 +146,7 @@ namespace OpenSlideNET
         {
             EnsureNotDisposed();
 
-            double result = Interop.GetLevelDownsample(_handle, level);
+            double result = OpenSlideInterop.GetLevelDownsample(_handle, level);
             if (result == -1.0d)
             {
                 ThrowHelper.CheckAndThrowError(_handle);
@@ -166,7 +166,7 @@ namespace OpenSlideNET
             {
                 EnsureNotDisposed();
 
-                string value = Interop.GetPropertyValue(_handle, name);
+                string value = OpenSlideInterop.GetPropertyValue(_handle, name);
                 ThrowHelper.CheckAndThrowError(_handle);
                 return value;
             }
@@ -175,7 +175,7 @@ namespace OpenSlideNET
         {
             get
             {
-                return this[Interop.OpenSlidePropertyNameComment];
+                return this[OpenSlideInterop.OpenSlidePropertyNameComment];
             }
         }
 
@@ -183,7 +183,7 @@ namespace OpenSlideNET
         {
             get
             {
-                return this[Interop.OpenSlidePropertyNameVendor];
+                return this[OpenSlideInterop.OpenSlidePropertyNameVendor];
             }
         }
 
@@ -191,7 +191,7 @@ namespace OpenSlideNET
         {
             get
             {
-                return this[Interop.OpenSlidePropertyNameQuickHash1];
+                return this[OpenSlideInterop.OpenSlidePropertyNameQuickHash1];
             }
         }
 
@@ -199,7 +199,7 @@ namespace OpenSlideNET
         {
             get
             {
-                return this[Interop.OpenSlidePropertyNameBackgroundColor];
+                return this[OpenSlideInterop.OpenSlidePropertyNameBackgroundColor];
             }
         }
 
@@ -207,7 +207,7 @@ namespace OpenSlideNET
         {
             get
             {
-                return this[Interop.OpenSlidePropertyNameObjectivePower];
+                return this[OpenSlideInterop.OpenSlidePropertyNameObjectivePower];
             }
         }
 
@@ -218,7 +218,7 @@ namespace OpenSlideNET
         {
             get
             {
-                if (TryGetProperty(Interop.OpenSlidePropertyNameMPPX, out string value) && double.TryParse(value, out double result))
+                if (TryGetProperty(OpenSlideInterop.OpenSlidePropertyNameMPPX, out string value) && double.TryParse(value, out double result))
                 {
                     return result;
                 }
@@ -233,7 +233,7 @@ namespace OpenSlideNET
         {
             get
             {
-                if (TryGetProperty(Interop.OpenSlidePropertyNameMPPY, out string value) && double.TryParse(value, out double result))
+                if (TryGetProperty(OpenSlideInterop.OpenSlidePropertyNameMPPY, out string value) && double.TryParse(value, out double result))
                 {
                     return result;
                 }
@@ -245,7 +245,7 @@ namespace OpenSlideNET
         {
             get
             {
-                if (TryGetProperty(Interop.OpenSlidePropertyNameBoundsX, out string value) && long.TryParse(value, out long result))
+                if (TryGetProperty(OpenSlideInterop.OpenSlidePropertyNameBoundsX, out string value) && long.TryParse(value, out long result))
                 {
                     return result;
                 }
@@ -257,7 +257,7 @@ namespace OpenSlideNET
         {
             get
             {
-                if (TryGetProperty(Interop.OpenSlidePropertyNameBoundsY, out string value) && long.TryParse(value, out long result))
+                if (TryGetProperty(OpenSlideInterop.OpenSlidePropertyNameBoundsY, out string value) && long.TryParse(value, out long result))
                 {
                     return result;
                 }
@@ -269,7 +269,7 @@ namespace OpenSlideNET
         {
             get
             {
-                if (TryGetProperty(Interop.OpenSlidePropertyNameBoundsWidth, out string value) && long.TryParse(value, out long result))
+                if (TryGetProperty(OpenSlideInterop.OpenSlidePropertyNameBoundsWidth, out string value) && long.TryParse(value, out long result))
                 {
                     return result;
                 }
@@ -281,7 +281,7 @@ namespace OpenSlideNET
         {
             get
             {
-                if (TryGetProperty(Interop.OpenSlidePropertyNameBoundsHeight, out string value) && long.TryParse(value, out long result))
+                if (TryGetProperty(OpenSlideInterop.OpenSlidePropertyNameBoundsHeight, out string value) && long.TryParse(value, out long result))
                 {
                     return result;
                 }
@@ -297,7 +297,7 @@ namespace OpenSlideNET
         {
             EnsureNotDisposed();
 
-            string[] properties = Interop.GetPropertyNames(_handle);
+            string[] properties = OpenSlideInterop.GetPropertyNames(_handle);
             ThrowHelper.CheckAndThrowError(_handle);
             return properties;
         }
@@ -306,7 +306,7 @@ namespace OpenSlideNET
         {
             EnsureNotDisposed();
 
-            value = Interop.GetPropertyValue(_handle, name);
+            value = OpenSlideInterop.GetPropertyValue(_handle, name);
             return value != null;
         }
 
@@ -314,7 +314,7 @@ namespace OpenSlideNET
         {
             EnsureNotDisposed();
 
-            var associatedImages = Interop.GetAssociatedImageNames(_handle);
+            var associatedImages = OpenSlideInterop.GetAssociatedImageNames(_handle);
             ThrowHelper.CheckAndThrowError(_handle);
             return associatedImages;
         }
@@ -323,7 +323,7 @@ namespace OpenSlideNET
         {
             EnsureNotDisposed();
 
-            Interop.GetAssociatedImageDimemsions(_handle, name, out long w, out long h);
+            OpenSlideInterop.GetAssociatedImageDimensions(_handle, name, out long w, out long h);
             if (w != -1 && h != -1)
             {
                 dims = new ImageDimemsions(w, h);
@@ -370,7 +370,7 @@ namespace OpenSlideNET
         }
         private unsafe void ReadAssociatedImageInternal(string name, void* pointer)
         {
-            Interop.ReadAssociatedImage(_handle, name, pointer);
+            OpenSlideInterop.ReadAssociatedImage(_handle, name, pointer);
             ThrowHelper.CheckAndThrowError(_handle);
         }
 
@@ -413,7 +413,7 @@ namespace OpenSlideNET
         }
         private unsafe void ReadRegionInternal(int level, long x, long y, long width, long height, void* pointer)
         {
-            Interop.ReadRegion(_handle, pointer, x, y, level, width, height);
+            OpenSlideInterop.ReadRegion(_handle, pointer, x, y, level, width, height);
             ThrowHelper.CheckAndThrowError(_handle);
         }
 
@@ -421,7 +421,7 @@ namespace OpenSlideNET
         {
             EnsureNotDisposed();
 
-            return Interop.GetBestLevelForDownsample(_handle, downsample);
+            return OpenSlideInterop.GetBestLevelForDownsample(_handle, downsample);
         }
 
 
@@ -458,24 +458,25 @@ namespace OpenSlideNET
 
         #region IDisposable Support
 
-        public bool IsDisposed => _handle == IntPtr.Zero;
+        public bool IsDisposed => _handle is null;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         protected void EnsureNotDisposed()
         {
-            if (_handle == IntPtr.Zero)
+            if (_handle is null)
             {
-                throw new ObjectDisposedException(nameof(OpenSlideImage));
+                ThrowObjectDisposedException();
             }
+        }
+
+        private static void ThrowObjectDisposedException()
+        {
+            throw new ObjectDisposedException(typeof(OpenSlideImage).FullName);
         }
 
         protected virtual void Dispose(bool disposing)
         {
-            var handle = Interlocked.Exchange(ref _handle, IntPtr.Zero);
-            if (handle != IntPtr.Zero)
-            {
-                Interop.Close(handle);
-            }
+            Interlocked.Exchange(ref _handle, null)?.Dispose();
         }
 
         ~OpenSlideImage()

@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace OpenSlideNET
 {
-    internal static partial class Interop
+    internal static partial class OpenSlideInterop
     {
 
         [DllImport(LibOpenSlide, EntryPoint = "openslide_detect_vendor", CallingConvention = CallingConvention.Cdecl)]
@@ -17,7 +17,7 @@ namespace OpenSlideNET
         /// </summary>
         /// <param name="filename">The filename to check. </param>
         /// <returns>An identification of the format vendor for this file, or NULL. </returns>
-        internal static unsafe string DetectVendor(string filename)
+        public static unsafe string DetectVendor(string filename)
         {
             Debug.Assert(filename != null);
 
@@ -43,14 +43,14 @@ namespace OpenSlideNET
         /// </summary>
         /// <param name="filename">The filename to open. </param>
         /// <returns>On success, a new OpenSlide object. If the file is not recognized by OpenSlide, NULL. If the file is recognized but an error occurred, an OpenSlide object in error state. </returns>
-        internal static unsafe IntPtr Open(string filename)
+        public static unsafe OpenSlideImageSafeHandle Open(string filename)
         {
             Debug.Assert(filename != null);
             byte* pointer = stackalloc byte[128];
             UnsafeUtf8Encoder utf8Encoder = new UnsafeUtf8Encoder(pointer, 128);
             try
             {
-                return Open_Internal(utf8Encoder.Encode(filename));
+                return new OpenSlideImageSafeHandle(Open_Internal(utf8Encoder.Encode(filename)), true);
             }
             finally
             {
@@ -64,7 +64,7 @@ namespace OpenSlideNET
         /// <param name="osr">The OpenSlide object. </param>
         /// <returns>The number of levels, or -1 if an error occurred. </returns>
         [DllImport(LibOpenSlide, EntryPoint = "openslide_get_level_count", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int GetLevelCount(IntPtr osr);
+        public static extern int GetLevelCount(OpenSlideImageSafeHandle osr);
 
         /// <summary>
         /// Get the dimensions of level 0 (the largest level). 
@@ -74,7 +74,7 @@ namespace OpenSlideNET
         /// <param name="w">The width of the image, or -1 if an error occurred. </param>
         /// <param name="h">The height of the image, or -1 if an error occurred. </param>
         [DllImport(LibOpenSlide, EntryPoint = "openslide_get_level0_dimensions", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void GetLevel0Dimensions(IntPtr osr, out long w, out long h);
+        public static extern void GetLevel0Dimensions(OpenSlideImageSafeHandle osr, out long w, out long h);
 
         /// <summary>
         /// Get the dimensions of a level. 
@@ -84,7 +84,7 @@ namespace OpenSlideNET
         /// <param name="w">The width of the image, or -1 if an error occurred or the level was out of range. </param>
         /// <param name="h">The height of the image, or -1 if an error occurred or the level was out of range. </param>
         [DllImport(LibOpenSlide, EntryPoint = "openslide_get_level_dimensions", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern void GetLevelDimensions(IntPtr osr, int level, out long w, out long h);
+        public static extern void GetLevelDimensions(OpenSlideImageSafeHandle osr, int level, out long w, out long h);
 
         /// <summary>
         /// Get the downsampling factor of a given level. 
@@ -93,7 +93,7 @@ namespace OpenSlideNET
         /// <param name="level">The desired level. </param>
         /// <returns>The downsampling factor for this level, or -1.0 if an error occurred or the level was out of range. </returns>
         [DllImport(LibOpenSlide, EntryPoint = "openslide_get_level_downsample", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern double GetLevelDownsample(IntPtr osr, int level);
+        public static extern double GetLevelDownsample(OpenSlideImageSafeHandle osr, int level);
 
         /// <summary>
         /// Get the best level to use for displaying the given downsample. 
@@ -102,7 +102,7 @@ namespace OpenSlideNET
         /// <param name="downsample">The downsample factor.</param>
         /// <returns>The level identifier, or -1 if an error occurred.</returns>
         [DllImport(LibOpenSlide, EntryPoint = "openslide_get_best_level_for_downsample", CallingConvention = CallingConvention.Cdecl)]
-        internal static extern int GetBestLevelForDownsample(IntPtr osr, double downsample);
+        public static extern int GetBestLevelForDownsample(OpenSlideImageSafeHandle osr, double downsample);
 
         /// <summary>
         /// Copy pre-multiplied ARGB data from a whole slide image. 
@@ -116,7 +116,7 @@ namespace OpenSlideNET
         /// <param name="w">The width of the region. Must be non-negative. </param>
         /// <param name="h">The height of the region. Must be non-negative. </param>
         [DllImport(LibOpenSlide, EntryPoint = "openslide_read_region", CallingConvention = CallingConvention.Cdecl)]
-        internal static unsafe extern void ReadRegion(IntPtr osr, void* dest, long x, long y, int level, long w, long h);
+        public static unsafe extern void ReadRegion(OpenSlideImageSafeHandle osr, void* dest, long x, long y, int level, long w, long h);
 
         [DllImport(LibOpenSlide, EntryPoint = "openslide_close", CallingConvention = CallingConvention.Cdecl)]
         private static extern void Close_Internal(IntPtr osr);
