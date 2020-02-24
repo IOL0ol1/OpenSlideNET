@@ -5,7 +5,7 @@ namespace OpenSlideNET
 {
     internal static partial class Interop
     {
-        internal const string LibOpenSlide = "libopenslide-0.dll";
+        internal const string LibOpenSlide = "libopenslide-0";
 
         /// <summary>
         /// The name of the property containing a slide's comment, if any. 
