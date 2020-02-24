@@ -13,7 +13,11 @@ namespace OpenSlideNET
                 return null;
             int len = 0;
             while (*(byte*)(nativeUtf8 + len) != 0) ++len;
+#if NETFRAMEWORK
+            return new string((sbyte*)nativeUtf8, 0, len, Encoding.UTF8);
+#else
             return Encoding.UTF8.GetString((byte*)nativeUtf8, len);
+#endif
         }
 
         internal ref struct UnsafeUtf8Encoder
